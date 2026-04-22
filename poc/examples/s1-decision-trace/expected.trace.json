@@ -1,0 +1,41 @@
+{
+  "scenario": "S1",
+  "inputAsset": "Broadcast-Viewing-Log-2027-Q1",
+  "transactionType": "SPE",
+  "candidateProvisions": [
+    "kr:PIPA-28-2",
+    "kr:PIPA-28-4",
+    "kr:PIPA-28-5",
+    "kr:PIPA-28-7"
+  ],
+  "conflictResolution": [
+    {
+      "tier": "Tier 1",
+      "rule": "lex-specialis",
+      "status": "not_applicable",
+      "reason": "S1 has no competing general-versus-special provision conflict after pseudonymized flow selection."
+    },
+    {
+      "tier": "Tier 2",
+      "rule": "stricter-wins",
+      "status": "not_applicable",
+      "reason": "S1 has no same-specificity conflict requiring risk ordering."
+    }
+  ],
+  "selectedTemplates": [
+    "templates/pipa-28-2-pseudonymized-research.ttl"
+  ],
+  "generatedPolicy": "templates/pipa-28-2-pseudonymized-research.ttl",
+  "complianceLevel": "L2",
+  "authorizationRecord": "examples/legal-basis-record/s1-valid.json",
+  "expectedRuntime": {
+    "allow": [
+      "odrl:use",
+      "kr:process-in-safe-area"
+    ],
+    "block": [
+      "kr:re-identify"
+    ],
+    "transferRightApplicable": false
+  }
+}

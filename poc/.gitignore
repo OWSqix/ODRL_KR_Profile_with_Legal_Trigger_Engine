@@ -1,0 +1,11 @@
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.venv/
+
+edc-extension/build/
+edc-extension/target/
+e2e-dsp/**/target/
+.gradle/
+
+.DS_Store

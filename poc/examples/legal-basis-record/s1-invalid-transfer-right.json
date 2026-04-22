@@ -1,0 +1,58 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://w3id.org/odrl-kr/context.jsonld"
+  ],
+  "type": [
+    "VerifiableCredential",
+    "KRLegalBasisRecordCredential"
+  ],
+  "issuer": "did:web:broadcaster.example",
+  "validFrom": "2027-06-15T09:23:45Z",
+  "credentialSubject": {
+    "recordModel": {
+      "type": "KR-LegalBasisRecord",
+      "basedOn": [
+        "ISO/IEC TS 27560:2023"
+      ],
+      "conformsTo": [
+        "https://w3id.org/odrl-kr/legal-basis-record/v1"
+      ]
+    },
+    "jurisdiction": "KR",
+    "status": "active",
+    "dataSubjectsScope": {
+      "individualConsentApplicable": false
+    },
+    "sourcePersonalDataBasis": {
+      "collectionOrUseBasis": [
+        "kr:PIPA-15"
+      ],
+      "pseudonymizedDataProcessingBasis": "kr:PIPA-28-2",
+      "rightsExclusionBasisForPseudonymizedData": "kr:PIPA-28-7"
+    },
+    "applicableProvisions": {
+      "lawfulProcessingBasis": "kr:PIPA-28-2",
+      "sectoralObligations": [
+        "kr:PIPA-28-4"
+      ],
+      "prohibitionRules": [
+        "kr:PIPA-28-5"
+      ],
+      "rightsExclusionRules": [
+        "kr:PIPA-28-7"
+      ]
+    },
+    "koreaExtension": {
+      "pseudonymizationLevel": "kr:Pseudonymization-Level-2",
+      "safeAreaProcessing": {
+        "required": true,
+        "type": "Remote-SPE"
+      },
+      "transferRight": {
+        "applicable": true,
+        "exclusionBasis": "kr:PIPA-28-7"
+      }
+    }
+  }
+}

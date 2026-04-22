@@ -1,0 +1,42 @@
+@prefix :     <https://example.org/odrl-kr/policy/> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dpv:  <https://w3id.org/dpv#> .
+@prefix kr:   <https://w3id.org/odrl-kr#> .
+
+:PreTransfer-Pseudonymization a odrl:Duty ;
+    odrl:action kr:pseudonymize ;
+    odrl:constraint [
+      odrl:leftOperand kr:pseudonymizationLevel ;
+      odrl:operator odrl:gteq ;
+      odrl:rightOperand kr:Pseudonymization-Level-2
+    ] .
+
+:S1-Media-Viewing-Research-Policy a odrl:Agreement ;
+    odrl:profile <https://w3id.org/odrl-kr> ;
+    odrl:assigner <did:web:broadcaster.kr> ;
+    odrl:assignee <did:web:media-research-univ.ac.kr> ;
+    odrl:obligation :PreTransfer-Pseudonymization ;
+    odrl:permission [
+      odrl:target :Broadcast-Viewing-Log-2027-Q1 ;
+      odrl:action odrl:use ;
+      odrl:constraint
+        [ odrl:leftOperand kr:legalBasisOperand ;
+          odrl:operator odrl:eq ;
+          odrl:rightOperand kr:PIPA-28-2 ],
+        [ odrl:leftOperand kr:purposeOperand ;
+          odrl:operator odrl:eq ;
+          odrl:rightOperand dpv:ResearchAndDevelopment ],
+        [ odrl:leftOperand kr:safeAreaProcessing ;
+          odrl:operator odrl:eq ;
+          odrl:rightOperand true ] ;
+      odrl:duty [ odrl:action kr:process-in-safe-area ]
+    ] ;
+    odrl:prohibition [
+      odrl:target :Broadcast-Viewing-Log-2027-Q1 ;
+      odrl:action kr:re-identify ;
+      odrl:constraint [
+        odrl:leftOperand kr:referenceLaw ;
+        odrl:operator odrl:eq ;
+        odrl:rightOperand kr:PIPA-28-5
+      ]
+    ] .

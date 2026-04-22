@@ -1,0 +1,13 @@
+{
+  "scenario": "S1",
+  "assetId": "Broadcast-Viewing-Log-2027-Q1",
+  "assetType": "broadcast-viewing-log",
+  "pseudonymized": true,
+  "pseudonymizationLevel": 2,
+  "purpose": "research",
+  "safeAreaProcessingRequired": true,
+  "sourceCollectionBasis": "kr:PIPA-15",
+  "transactionType": "SPE",
+  "disclosure": false,
+  "reidentificationRequested": false
+}

@@ -1,0 +1,9 @@
+{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+  },
+  "@id": "s1-contract-definition",
+  "accessPolicyId": "s1-odrl-kr-policy",
+  "contractPolicyId": "s1-odrl-kr-policy",
+  "assetsSelector": []
+}

@@ -1,0 +1,17 @@
+{
+  "@context": {
+    "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+  },
+  "@id": "s1-broadcast-viewing-log",
+  "properties": {
+    "name": "S1 pseudonymized broadcast viewing log",
+    "contenttype": "application/json",
+    "odrlKrScenario": "S1"
+  },
+  "dataAddress": {
+    "type": "HttpData",
+    "name": "S1 asset",
+    "baseUrl": "https://jsonplaceholder.typicode.com/users",
+    "proxyPath": "true"
+  }
+}

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="."
+COMMAND=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -p)
+      PROJECT_DIR="$2"
+      shift 2
+      ;;
+    test)
+      COMMAND="test"
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+if [[ "$COMMAND" != "test" ]]; then
+  echo "This wrapper supports only: ./gradlew -p edc-extension test" >&2
+  exit 2
+fi
+
+mvn -q -f "$PROJECT_DIR/pom.xml" test

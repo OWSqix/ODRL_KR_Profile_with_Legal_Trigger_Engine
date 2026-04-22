@@ -1,0 +1,61 @@
+@prefix kr:   <https://w3id.org/odrl-kr#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dpv:  <https://w3id.org/dpv#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+kr:LegalProvision a owl:Class .
+kr:LawfulProcessingBasis a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:SpecialCategoryCondition a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:CrossBorderTransferCondition a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:InstitutionalSafeguardRule a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:SectoralObligation a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:ProhibitionRule a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:RightsExclusionRule a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:DataSubjectRight a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+kr:DeprecatedLegalProvision a owl:Class ; rdfs:subClassOf kr:LegalProvision .
+
+kr:PIPA-15 a kr:LawfulProcessingBasis, dpv:LegalBasis .
+kr:PIPA-17 a kr:LawfulProcessingBasis, dpv:LegalBasis .
+kr:PIPA-23 a kr:SpecialCategoryCondition .
+kr:PIPA-28-2 a kr:LawfulProcessingBasis, dpv:LegalBasis .
+kr:PIPA-28-3 a kr:InstitutionalSafeguardRule .
+kr:PIPA-28-4 a kr:SectoralObligation .
+kr:PIPA-28-5 a kr:ProhibitionRule .
+kr:PIPA-28-7 a kr:RightsExclusionRule .
+kr:PIPA-28-8 a kr:CrossBorderTransferCondition .
+kr:PIPA-35-2 a kr:DataSubjectRight .
+
+kr:Broadcasting-3 a kr:SectoralObligation .
+kr:Broadcasting-69 a kr:SectoralObligation .
+kr:Copyright-104-2 a kr:ProhibitionRule .
+kr:ContentIndustry-24 a kr:SectoralObligation .
+kr:ContentIndustry-26 a kr:SectoralObligation .
+kr:ContentIndustry-28 a kr:SectoralObligation .
+kr:FilmVideo-29 a kr:SectoralObligation .
+kr:FilmVideo-50 a kr:SectoralObligation .
+
+kr:ITNetwork-22 a kr:DeprecatedLegalProvision ; owl:deprecated true .
+kr:ITNetwork-23 a kr:DeprecatedLegalProvision ; owl:deprecated true .
+
+kr:rank a rdf:Property ; rdfs:range xsd:integer .
+kr:PseudonymizationLevel a owl:Class .
+kr:Pseudonymization-Level-1 a kr:PseudonymizationLevel ; kr:rank 1 .
+kr:Pseudonymization-Level-2 a kr:PseudonymizationLevel ; kr:rank 2 .
+kr:Pseudonymization-Level-3 a kr:PseudonymizationLevel ; kr:rank 3 .
+
+kr:hasPseudonymizationLevel a rdf:Property ; rdfs:range kr:PseudonymizationLevel .
+kr:hasReferenceLaw a rdf:Property ; rdfs:range kr:LegalProvision .
+kr:refersToProperty a rdf:Property .
+
+kr:legalBasisOperand a odrl:LeftOperand ; kr:refersToProperty dpv:hasLegalBasis .
+kr:purposeOperand a odrl:LeftOperand ; kr:refersToProperty dpv:hasPurpose .
+kr:pseudonymizationLevel a odrl:LeftOperand ; kr:refersToProperty kr:hasPseudonymizationLevel .
+kr:referenceLaw a odrl:LeftOperand ; kr:refersToProperty kr:hasReferenceLaw .
+kr:safeAreaProcessing a odrl:LeftOperand .
+
+kr:pseudonymize a odrl:Action .
+kr:process-in-safe-area a odrl:Action .
+kr:re-identify a odrl:Action .

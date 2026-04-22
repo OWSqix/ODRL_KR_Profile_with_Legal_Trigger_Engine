@@ -1,0 +1,10 @@
+.omc/
+.omx/
+
+draft_v1/
+draft_v2/
+draft_v3/
+draft_v4/
+*.pdf
+
+.DS_Store

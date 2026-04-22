@@ -1,0 +1,32 @@
+{
+  "@context": {
+    "kr": "https://w3id.org/odrl-kr#",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "dpv": "https://w3id.org/dpv#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "profile": {
+      "@id": "odrl:profile",
+      "@type": "@id"
+    },
+    "target": {
+      "@id": "odrl:target",
+      "@type": "@id"
+    },
+    "action": {
+      "@id": "odrl:action",
+      "@type": "@id"
+    },
+    "leftOperand": {
+      "@id": "odrl:leftOperand",
+      "@type": "@id"
+    },
+    "operator": {
+      "@id": "odrl:operator",
+      "@type": "@id"
+    },
+    "rightOperand": {
+      "@id": "odrl:rightOperand",
+      "@type": "@id"
+    }
+  }
+}

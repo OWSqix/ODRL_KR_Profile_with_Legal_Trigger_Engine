@@ -1,0 +1,53 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix kr:   <https://w3id.org/odrl-kr#> .
+@prefix odrl: <http://www.w3.org/ns/odrl/2/> .
+@prefix dpv:  <https://w3id.org/dpv#> .
+
+kr:PolicyProfileShape a sh:NodeShape ;
+  sh:targetSubjectsOf odrl:profile ;
+  sh:property [
+    sh:path odrl:profile ;
+    sh:hasValue <https://w3id.org/odrl-kr> ;
+    sh:message "S-1: ODRL-KR policies must declare odrl:profile <https://w3id.org/odrl-kr>." ;
+  ] .
+
+kr:LeftOperandShape a sh:NodeShape ;
+  sh:targetObjectsOf odrl:leftOperand ;
+  sh:in ( kr:legalBasisOperand kr:purposeOperand kr:pseudonymizationLevel kr:referenceLaw kr:safeAreaProcessing ) ;
+  sh:message "S-2: leftOperand must be an ODRL-KR supported operand for this profile." .
+
+kr:ReidentifyProhibitionShape a sh:NodeShape ;
+  sh:targetSubjectsOf odrl:action ;
+  sh:sparql [
+    sh:message "S-3: kr:re-identify may appear only in an odrl:prohibition rule." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this odrl:action kr:re-identify .
+        FILTER NOT EXISTS { ?policy odrl:prohibition $this . }
+      }
+    """ ;
+  ] .
+
+kr:PseudonymizationRankShape a sh:NodeShape ;
+  sh:targetSubjectsOf odrl:leftOperand ;
+  sh:sparql [
+    sh:message "S-4: pseudonymization rightOperand must have integer kr:rank semantics." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this odrl:leftOperand kr:pseudonymizationLevel ;
+              odrl:rightOperand ?level .
+        FILTER NOT EXISTS { ?level kr:rank ?rank . }
+      }
+    """ ;
+  ] .
+
+kr:NonBasisProvisionShape a sh:NodeShape ;
+  sh:targetNode kr:PIPA-23, kr:PIPA-28-5, kr:PIPA-28-7 ;
+  sh:sparql [
+    sh:message "S-5: condition, prohibition, and rights-exclusion provisions must not be dpv:LegalBasis." ;
+    sh:select """
+      SELECT $this WHERE {
+        $this a dpv:LegalBasis .
+      }
+    """ ;
+  ] .

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/odrl-kr/legal-basis-record/v1/schema",
+  "title": "KR LegalBasisRecord",
+  "type": "object",
+  "required": ["@context", "type", "issuer", "validFrom", "credentialSubject"],
+  "properties": {
+    "@context": {
+      "type": "array",
+      "minItems": 2
+    },
+    "type": {
+      "type": "array",
+      "contains": { "const": "KRLegalBasisRecordCredential" }
+    },
+    "issuer": { "type": "string", "minLength": 1 },
+    "validFrom": { "type": "string", "format": "date-time" },
+    "credentialSubject": {
+      "type": "object",
+      "required": [
+        "recordModel",
+        "jurisdiction",
+        "dataSubjectsScope",
+        "sourcePersonalDataBasis",
+        "applicableProvisions",
+        "koreaExtension"
+      ],
+      "properties": {
+        "recordModel": {
+          "type": "object",
+          "required": ["type", "basedOn", "conformsTo"],
+          "properties": {
+            "type": { "const": "KR-LegalBasisRecord" },
+            "basedOn": {
+              "type": "array",
+              "contains": { "const": "ISO/IEC TS 27560:2023" }
+            },
+            "conformsTo": {
+              "type": "array",
+              "contains": { "const": "https://w3id.org/odrl-kr/legal-basis-record/v1" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "jurisdiction": { "const": "KR" },
+        "status": {
+          "enum": ["active", "expired", "invalidated", "superseded"]
+        },
+        "dataSubjectsScope": {
+          "type": "object",
+          "required": ["individualConsentApplicable"],
+          "properties": {
+            "individualConsentApplicable": { "const": false }
+          },
+          "additionalProperties": true
+        },
+        "sourcePersonalDataBasis": {
+          "type": "object",
+          "required": [
+            "collectionOrUseBasis",
+            "pseudonymizedDataProcessingBasis",
+            "rightsExclusionBasisForPseudonymizedData"
+          ],
+          "properties": {
+            "collectionOrUseBasis": {
+              "type": "array",
+              "contains": { "const": "kr:PIPA-15" }
+            },
+            "pseudonymizedDataProcessingBasis": { "const": "kr:PIPA-28-2" },
+            "rightsExclusionBasisForPseudonymizedData": { "const": "kr:PIPA-28-7" }
+          },
+          "additionalProperties": false
+        },
+        "applicableProvisions": {
+          "type": "object",
+          "required": [
+            "lawfulProcessingBasis",
+            "sectoralObligations",
+            "prohibitionRules",
+            "rightsExclusionRules"
+          ],
+          "properties": {
+            "lawfulProcessingBasis": { "const": "kr:PIPA-28-2" },
+            "sectoralObligations": {
+              "type": "array",
+              "contains": { "const": "kr:PIPA-28-4" }
+            },
+            "prohibitionRules": {
+              "type": "array",
+              "contains": { "const": "kr:PIPA-28-5" }
+            },
+            "rightsExclusionRules": {
+              "type": "array",
+              "contains": { "const": "kr:PIPA-28-7" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "koreaExtension": {
+          "type": "object",
+          "required": [
+            "pseudonymizationLevel",
+            "safeAreaProcessing",
+            "transferRight"
+          ],
+          "properties": {
+            "pseudonymizationLevel": {
+              "enum": [
+                "kr:Pseudonymization-Level-1",
+                "kr:Pseudonymization-Level-2",
+                "kr:Pseudonymization-Level-3"
+              ]
+            },
+            "safeAreaProcessing": {
+              "type": "object",
+              "required": ["required", "type"],
+              "properties": {
+                "required": { "type": "boolean" },
+                "type": { "type": "string" }
+              },
+              "additionalProperties": false
+            },
+            "transferRight": {
+              "type": "object",
+              "required": ["applicable", "exclusionBasis"],
+              "properties": {
+                "applicable": { "const": false },
+                "exclusionBasis": { "const": "kr:PIPA-28-7" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "proof": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "DataIntegrityProof" },
+        "cryptosuite": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
