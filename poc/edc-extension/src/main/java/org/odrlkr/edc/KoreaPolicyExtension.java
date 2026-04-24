@@ -3,6 +3,10 @@ package org.odrlkr.edc;
 import org.eclipse.edc.connector.dataplane.spi.Endpoint;
 import org.eclipse.edc.connector.dataplane.spi.iam.DataPlaneAuthorizationService;
 import org.eclipse.edc.connector.dataplane.spi.iam.PublicEndpointGeneratorService;
+import org.eclipse.edc.connector.controlplane.transfer.spi.store.TransferProcessStore;
+import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataAddressStore;
+import org.eclipse.edc.connector.controlplane.asset.spi.index.AssetIndex;
+import org.eclipse.edc.edr.spi.store.EndpointDataReferenceStore;
 import org.eclipse.edc.policy.engine.spi.PolicyEngine;
 import org.eclipse.edc.policy.engine.spi.RuleBindingRegistry;
 import org.eclipse.edc.policy.model.Duty;
@@ -16,6 +20,9 @@ import org.eclipse.edc.spi.security.Vault;
 import org.eclipse.edc.transform.spi.TypeTransformerRegistry;
 
 import com.sun.net.httpserver.HttpServer;
+
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -37,9 +44,9 @@ import static org.odrlkr.edc.KoreaPolicyConstants.SCOPE_NEGOTIATION;
 import static org.odrlkr.edc.KoreaPolicyConstants.SCOPE_TRANSFER;
 
 /**
- * EDC 0.16.0 policy extension for the ODRL-KR proof background.
+ * EDC 0.17.0 policy extension for the ODRL-KR proof background.
  *
- * <p>This class compiles against EDC 0.16.0 policy-engine SPI and registers
+ * <p>This class compiles against EDC 0.17.0 policy-engine SPI and registers
  * concrete policy functions for the proof scenario.
  */
 @Extension("ODRL-KR Policy Extension")
@@ -65,6 +72,18 @@ public final class KoreaPolicyExtension implements ServiceExtension {
     @Inject(required = false)
     private Vault vault;
 
+    @Inject(required = false)
+    private EndpointDataReferenceStore endpointDataReferenceStore;
+
+    @Inject(required = false)
+    private TransferProcessStore transferProcessStore;
+
+    @Inject(required = false)
+    private DataAddressStore sourceDataAddressStore;
+
+    @Inject(required = false)
+    private AssetIndex assetIndex;
+
     private HttpServer publicPayloadServer;
 
     @Override
@@ -82,12 +101,12 @@ public final class KoreaPolicyExtension implements ServiceExtension {
                 vault.storeSecret("public-key", publicKey.replace("\\n", "\n"));
             }
         }
+        var publicBaseUrl = context.getSetting("edc.dataplane.api.public.baseurl", "http://localhost:19291/public");
         if (publicEndpointGenerator != null) {
-            var publicBaseUrl = context.getSetting("edc.dataplane.api.public.baseurl", "http://localhost:19291/public");
             publicEndpointGenerator.addGeneratorFunction("HttpData", ignored -> Endpoint.url(publicBaseUrl));
-            if (dataPlaneAuthorizationService != null) {
-                startPublicPayloadEndpoint(publicBaseUrl);
-            }
+        }
+        if (dataPlaneAuthorizationService != null || endpointDataReferenceStore != null) {
+            startPublicPayloadEndpoint(publicBaseUrl);
         }
         register(bindings, engine, records != null ? records : InMemoryRecordVerificationService.withS1Record());
     }
@@ -137,46 +156,190 @@ public final class KoreaPolicyExtension implements ServiceExtension {
             var path = uri.getPath() == null || uri.getPath().isBlank() ? "/" : uri.getPath();
             var client = HttpClient.newHttpClient();
             publicPayloadServer = HttpServer.create(new InetSocketAddress("localhost", port), 0);
-            publicPayloadServer.createContext(path, exchange -> {
-                var token = exchange.getRequestHeaders().getFirst("Authorization");
-                if (token == null || token.isBlank()) {
-                    writeResponse(exchange, 401, "Missing Authorization token.");
-                    return;
-                }
-                var authorized = dataPlaneAuthorizationService.authorize(token, Map.of(
-                        "path", exchange.getRequestURI().getPath(),
-                        "method", exchange.getRequestMethod()
-                ));
-                if (authorized.failed()) {
-                    writeResponse(exchange, 403, authorized.getFailureDetail());
-                    return;
-                }
-                var source = authorized.getContent();
-                var sourceUrl = source.getStringProperty("baseUrl");
-                if (sourceUrl == null || sourceUrl.isBlank()) {
-                    writeResponse(exchange, 502, "Authorized source DataAddress has no baseUrl.");
-                    return;
-                }
-                try {
-                    var upstreamRequest = HttpRequest.newBuilder(URI.create(sourceUrl)).GET().build();
-                    var upstreamResponse = client.send(upstreamRequest, HttpResponse.BodyHandlers.ofByteArray());
-                    exchange.getResponseHeaders().add("content-type",
-                            upstreamResponse.headers().firstValue("content-type").orElse("application/octet-stream"));
-                    exchange.sendResponseHeaders(upstreamResponse.statusCode(), upstreamResponse.body().length);
-                    try (var body = exchange.getResponseBody()) {
-                        body.write(upstreamResponse.body());
+            if (dataPlaneAuthorizationService != null) {
+                publicPayloadServer.createContext(path, exchange -> {
+                    var token = exchange.getRequestHeaders().getFirst("Authorization");
+                    if (token == null || token.isBlank()) {
+                        writeResponse(exchange, 401, "Missing Authorization token.");
+                        return;
                     }
-                } catch (InterruptedException exception) {
-                    Thread.currentThread().interrupt();
-                    writeResponse(exchange, 500, exception.getMessage());
-                } catch (IOException | IllegalArgumentException exception) {
-                    writeResponse(exchange, 502, exception.getMessage());
-                }
-            });
+                    var authorized = dataPlaneAuthorizationService.authorize(token, Map.of(
+                            "path", exchange.getRequestURI().getPath(),
+                            "method", exchange.getRequestMethod()
+                    ));
+                    if (authorized.failed()) {
+                        writeResponse(exchange, 403, authorized.getFailureDetail());
+                        return;
+                    }
+                    var source = authorized.getContent();
+                    var sourceUrl = source.getStringProperty("baseUrl");
+                    if (sourceUrl == null || sourceUrl.isBlank()) {
+                        writeResponse(exchange, 502, "Authorized source DataAddress has no baseUrl.");
+                        return;
+                    }
+                    try {
+                        var upstreamRequest = HttpRequest.newBuilder(URI.create(sourceUrl)).GET().build();
+                        var upstreamResponse = client.send(upstreamRequest, HttpResponse.BodyHandlers.ofByteArray());
+                        exchange.getResponseHeaders().add("content-type",
+                                upstreamResponse.headers().firstValue("content-type").orElse("application/octet-stream"));
+                        exchange.sendResponseHeaders(upstreamResponse.statusCode(), upstreamResponse.body().length);
+                        try (var body = exchange.getResponseBody()) {
+                            body.write(upstreamResponse.body());
+                        }
+                    } catch (InterruptedException exception) {
+                        Thread.currentThread().interrupt();
+                        writeResponse(exchange, 500, exception.getMessage());
+                    } catch (IOException | IllegalArgumentException exception) {
+                        writeResponse(exchange, 502, exception.getMessage());
+                    }
+                });
+            }
+            if (endpointDataReferenceStore != null) {
+                publicPayloadServer.createContext(path + "/edrs", exchange -> {
+                    if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                        writeResponse(exchange, 405, "Method Not Allowed");
+                        return;
+                    }
+
+                    var prefix = path + "/edrs/";
+                    var requestPath = exchange.getRequestURI().getPath();
+                    if (!requestPath.startsWith(prefix) || !requestPath.endsWith("/dataaddress")) {
+                        writeResponse(exchange, 404, "Not Found");
+                        return;
+                    }
+
+                    var transferProcessId = requestPath.substring(prefix.length(), requestPath.length() - "/dataaddress".length());
+                    if (transferProcessId.isBlank()) {
+                        writeResponse(exchange, 400, "Missing transfer process id.");
+                        return;
+                    }
+
+                    var resolved = endpointDataReferenceStore.resolveByTransferProcess(transferProcessId);
+                    if (resolved.failed() || resolved.getContent() == null) {
+                        writeResponse(exchange, 404, "EDR data address not found.");
+                        return;
+                    }
+
+                    writeJsonResponse(exchange, resolved.getContent());
+                });
+            }
+            if (transferProcessStore != null && sourceDataAddressStore != null) {
+                publicPayloadServer.createContext(path + "/transfers", exchange -> {
+                    if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                        writeResponse(exchange, 405, "Method Not Allowed");
+                        return;
+                    }
+
+                    var prefix = path + "/transfers/";
+                    var requestPath = exchange.getRequestURI().getPath();
+                    if (!requestPath.startsWith(prefix) || !requestPath.endsWith("/source-data-address")) {
+                        writeResponse(exchange, 404, "Not Found");
+                        return;
+                    }
+
+                    var transferProcessId = requestPath.substring(prefix.length(), requestPath.length() - "/source-data-address".length());
+                    if (transferProcessId.isBlank()) {
+                        writeResponse(exchange, 400, "Missing transfer process id.");
+                        return;
+                    }
+
+                    var transferProcess = transferProcessStore.findById(transferProcessId);
+                    if (transferProcess == null) {
+                        transferProcess = transferProcessStore.findForCorrelationId(transferProcessId);
+                    }
+                    if (transferProcess == null) {
+                        writeResponse(exchange, 404, "Transfer process not found.");
+                        return;
+                    }
+
+                    var resolved = sourceDataAddressStore.resolve(transferProcess);
+                    if (resolved.failed() || resolved.getContent() == null) {
+                        writeResponse(exchange, 404, "Source data address not found.");
+                        return;
+                    }
+
+                    writeJsonResponse(exchange, resolved.getContent());
+                });
+            }
+            if (assetIndex != null) {
+                publicPayloadServer.createContext(path + "/assets", exchange -> {
+                    if (!"GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                        writeResponse(exchange, 405, "Method Not Allowed");
+                        return;
+                    }
+
+                    var prefix = path + "/assets/";
+                    var requestPath = exchange.getRequestURI().getPath();
+                    if (!requestPath.startsWith(prefix) || !requestPath.endsWith("/source-data-address")) {
+                        writeResponse(exchange, 404, "Not Found");
+                        return;
+                    }
+
+                    var assetId = requestPath.substring(prefix.length(), requestPath.length() - "/source-data-address".length());
+                    if (assetId.isBlank()) {
+                        writeResponse(exchange, 400, "Missing asset id.");
+                        return;
+                    }
+
+                    var resolved = assetIndex.resolveForAsset(assetId);
+                    if (resolved == null) {
+                        var asset = assetIndex.findById(assetId);
+                        if (asset != null) {
+                            resolved = asset.getDataAddress();
+                        }
+                    }
+                    if (resolved == null) {
+                        writeResponse(exchange, 404, "Source data address not found.");
+                        return;
+                    }
+
+                    writeJsonResponse(exchange, resolved);
+                });
+            }
             publicPayloadServer.start();
         } catch (IllegalArgumentException | IOException ignored) {
             // Local authenticated public endpoint for connector-level E2E tests.
             // If it cannot bind, normal EDC boot should continue and tests will expose the failure.
+        }
+    }
+
+    private void writeJsonResponse(com.sun.net.httpserver.HttpExchange exchange,
+                                   org.eclipse.edc.spi.types.domain.DataAddress dataAddress) throws IOException {
+        var root = Json.createObjectBuilder();
+        var properties = Json.createObjectBuilder();
+        if (dataAddress.getType() != null) {
+            root.add("type", dataAddress.getType());
+        }
+        for (var entry : dataAddress.getProperties().entrySet()) {
+            addJsonValue(properties, entry.getKey(), entry.getValue());
+            addJsonValue(root, entry.getKey(), entry.getValue());
+        }
+        root.add("properties", properties);
+
+        var bytes = root.build().toString().getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().add("content-type", "application/json; charset=utf-8");
+        exchange.sendResponseHeaders(200, bytes.length);
+        try (var body = exchange.getResponseBody()) {
+            body.write(bytes);
+        }
+    }
+
+    private void addJsonValue(JsonObjectBuilder builder, String key, Object value) {
+        if (value == null) {
+            return;
+        }
+        if (value instanceof Boolean booleanValue) {
+            builder.add(key, booleanValue);
+        } else if (value instanceof Integer integerValue) {
+            builder.add(key, integerValue);
+        } else if (value instanceof Long longValue) {
+            builder.add(key, longValue);
+        } else if (value instanceof Double doubleValue) {
+            builder.add(key, doubleValue);
+        } else if (value instanceof Float floatValue) {
+            builder.add(key, floatValue.doubleValue());
+        } else {
+            builder.add(key, String.valueOf(value));
         }
     }
 

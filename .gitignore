@@ -1,5 +1,10 @@
 .omc/
 .omx/
+.codex
+
+**/target/
+**/__pycache__/
+*.pyc
 
 draft_v1/
 draft_v2/

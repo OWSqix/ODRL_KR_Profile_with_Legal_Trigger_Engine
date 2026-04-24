@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.odrlkr</groupId>
-    <artifactId>odrl-kr-dsp-e2e-connector</artifactId>
+    <artifactId>odrl-kr-dsp-e2e-control-plane</artifactId>
     <version>0.2.0</version>
-    <name>ODRL-KR DSP E2E Connector</name>
+    <name>ODRL-KR DSP E2E Control Plane</name>
 
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
@@ -100,11 +100,6 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.edc</groupId>
-            <artifactId>transfer-data-plane-signaling</artifactId>
-            <version>${edc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.edc</groupId>
             <artifactId>validator-data-address-http-data</artifactId>
             <version>${edc.version}</version>
         </dependency>
@@ -140,32 +135,12 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.edc</groupId>
-            <artifactId>data-plane-self-registration</artifactId>
+            <artifactId>data-plane-selector-control-api</artifactId>
             <version>${edc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.edc</groupId>
-            <artifactId>data-plane-signaling-api</artifactId>
-            <version>${edc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.edc</groupId>
-            <artifactId>data-plane-signaling-client</artifactId>
-            <version>${edc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.edc</groupId>
-            <artifactId>data-plane-core</artifactId>
-            <version>${edc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.edc</groupId>
-            <artifactId>data-plane-http</artifactId>
-            <version>${edc.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.edc</groupId>
-            <artifactId>data-plane-iam</artifactId>
+            <artifactId>data-plane-signaling-core</artifactId>
             <version>${edc.version}</version>
         </dependency>
     </dependencies>
@@ -192,7 +167,7 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>connector</finalName>
+                            <finalName>control-plane</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

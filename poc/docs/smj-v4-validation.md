@@ -17,9 +17,9 @@ SMJ v4's concept-proof scope is substantially complete for the S1 proof path and
 | S1 decision trace exists for review supplement. | `draft_v2/smj_v4/smj_submission_kr.md:421` | `poc/examples/s1-decision-trace/expected.trace.json`; `src/odrl_kr/lte.py`; trace equality tests | PASS |
 | LTE S1 classification yields §28-2, §28-4, §28-5, §28-7. | `draft_v2/smj_v4/smj_submission_kr.md:423-433` | `test_s1_trace_has_required_proof_path` | PASS |
 | Conflict trace expectations are represented for S1. | `draft_v2/smj_v4/smj_submission_kr.md:449-461` | S1 trace records Tier 1/Tier 2 not-applicable path; S1 schema-level §28-7 separation is tested | PASS for S1 |
-| EDC PolicyEngine extension compiles against EDC 0.16.0. | `draft_v2/smj_v4/smj_submission_kr.md:357-395` | `poc/edc-extension/pom.xml`; `KoreaPolicyExtension`; Maven tests | PASS |
+| EDC PolicyEngine extension compiles against EDC 0.17.0. | `draft_v2/smj_v4/smj_submission_kr.md:357-395` | `poc/edc-extension/pom.xml`; `KoreaPolicyExtension`; Maven tests | PASS |
 | EDC allow/block policy checks execute. | `draft_v2/smj_v4/smj_submission_kr.md:470-477` | EDC `PolicyEngineImpl` tests: legal basis allow/block, pseudonymization rank, safe-area, re-identification prohibition | PASS |
-| Connector-level DSP runtime evidence exists. | PoC-stage extension of `draft_v2/smj_v4/smj_submission_kr.md:421, 477` | `poc/e2e-dsp/scripts/run_dsp_e2e.sh` starts two EDC connectors and reaches `FINALIZED` negotiation, transfer `STARTED`, EDR, payload retrieval | PASS, beyond paper scope |
+| Connector-level DSP runtime evidence exists. | PoC-stage extension of `draft_v2/smj_v4/smj_submission_kr.md:421, 477` | `poc/e2e-dsp/scripts/run_dsp_e2e.sh` starts two EDC control planes plus standalone custom data planes and reaches `FINALIZED` negotiation, HTTP PULL/PUSH transfer `STARTED`, EDR, payload retrieval | PASS, beyond paper scope |
 | VC Data Integrity proof verification. | `draft_v2/smj_v4/smj_submission_kr.md:447, 476` | Schema includes proof object and docs define scope; cryptographic VC proof verification is not implemented | PARTIAL / NOT REQUIRED FOR S1 design-stage proof |
 | S1-S6 full scenario implementation. | `draft_v2/smj_v4/smj_submission_kr.md:470-472` | S1 is executable; S2-S6 remain specified but not implemented as full traces/tests | PARTIAL / PoC extension target |
 
@@ -50,4 +50,4 @@ These do not block SMJ v4 concept-proof completion, but remain future work:
 
 ## Conclusion
 
-For SMJ v4's stated design-stage validation and S1 supplementary proof path, the concept proof is complete. The current PoC also provides stronger-than-paper runtime evidence by executing a local EDC 0.16.0 two-connector DSP flow through negotiation, transfer, EDR, and payload retrieval.
+For SMJ v4's stated design-stage validation and S1 supplementary proof path, the concept proof is complete. The current PoC also provides stronger-than-paper runtime evidence by executing a local EDC 0.17.0 two-connector DSP flow through negotiation, transfer, EDR, and payload retrieval.

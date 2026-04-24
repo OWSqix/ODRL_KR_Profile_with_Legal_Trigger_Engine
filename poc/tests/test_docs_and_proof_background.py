@@ -37,7 +37,7 @@ def test_proof_background_maps_claims_to_tests():
 
 def test_edc_docs_state_adapter_boundary():
     text = read("docs/edc-extension.md")
-    assert "Eclipse EDC 0.16.0 artifacts" in text
+    assert "Eclipse EDC 0.17.0 artifacts" in text
     assert "ServiceExtension" in text
     assert "AtomicConstraintRuleFunction" in text
     assert "production EDC connector" in text

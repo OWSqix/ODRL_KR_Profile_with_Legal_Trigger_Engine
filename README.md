@@ -1,6 +1,6 @@
 # ODRL-KR Profile with Legal Trigger Engine
 
-This repository contains a research proof-of-concept for ODRL-KR, LegalBasisRecord, S1 legal-trigger decision tracing, and Eclipse EDC 0.16.0 integration.
+This repository contains a research proof-of-concept for ODRL-KR, LegalBasisRecord, S1 legal-trigger decision tracing, and Eclipse EDC 0.17.0 integration.
 
 The implementation is under [`poc/`](poc/).
 

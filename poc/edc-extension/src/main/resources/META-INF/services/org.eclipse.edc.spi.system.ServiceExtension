@@ -1,1 +1,4 @@
 org.odrlkr.edc.KoreaPolicyExtension
+org.odrlkr.edc.SingleParticipantContextCompatibilityExtension
+org.odrlkr.edc.NoAuthSignalingAuthorizationRegistrationExtension
+org.odrlkr.edc.NoOpTokenDecoratorExtension

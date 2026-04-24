@@ -2,11 +2,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CONNECTOR_JAR="$ROOT/connector/target/connector.jar"
+CONTROL_PLANE_JAR="$ROOT/control-plane/target/control-plane.jar"
+DATAPLANE_SCRIPT="$ROOT/custom-dataplane/run_custom_dataplane.py"
 LOG_DIR="$ROOT/target/logs"
 PID_DIR="$ROOT/target/pids"
 CONFIG_DIR="$ROOT/target/configuration"
 
+rm -rf "$LOG_DIR" "$PID_DIR" "$CONFIG_DIR"
 mkdir -p "$LOG_DIR" "$PID_DIR" "$CONFIG_DIR"
 
 cleanup() {
@@ -35,7 +37,7 @@ wait_for_port() {
 }
 
 mvn -q -f "$ROOT/../edc-extension/pom.xml" install
-mvn -q -f "$ROOT/connector/pom.xml" package
+mvn -q -f "$ROOT/control-plane/pom.xml" package
 
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$CONFIG_DIR/private.pem" >/dev/null 2>&1
 openssl rsa -in "$CONFIG_DIR/private.pem" -pubout -out "$CONFIG_DIR/public.pem" >/dev/null 2>&1
@@ -57,19 +59,47 @@ for name in ("provider", "consumer"):
     target.write_text("\n".join(lines) + "\n")
 PY
 
-java -Dedc.fs.config="$CONFIG_DIR/provider.properties" -jar "$CONNECTOR_JAR" \
+java -Dedc.fs.config="$CONFIG_DIR/provider.properties" -jar "$CONTROL_PLANE_JAR" \
   >"$LOG_DIR/provider.log" 2>&1 &
 echo "$!" >"$PID_DIR/provider.pid"
 
-java -Dedc.fs.config="$CONFIG_DIR/consumer.properties" -jar "$CONNECTOR_JAR" \
+java -Dedc.fs.config="$CONFIG_DIR/consumer.properties" -jar "$CONTROL_PLANE_JAR" \
   >"$LOG_DIR/consumer.log" 2>&1 &
 echo "$!" >"$PID_DIR/consumer.pid"
 
 wait_for_port 19193 provider-management
 wait_for_port 29193 consumer-management
+wait_for_port 19192 provider-control
+wait_for_port 29192 consumer-control
 wait_for_port 19194 provider-dsp
 wait_for_port 29194 consumer-dsp
-sleep 2
+
+python3 "$DATAPLANE_SCRIPT" \
+  --participant-id provider \
+  --component-id provider-http-dataplane \
+  --port 19320 \
+  --control-plane-control-url http://127.0.0.1:19192/control/v1 \
+  --public-base-url http://127.0.0.1:19320/public \
+  --source-lookup-base-url http://127.0.0.1:19291/public \
+  --default-source-url https://jsonplaceholder.typicode.com/users \
+  --log-file "$LOG_DIR/provider-dataplane.log" \
+  >"$LOG_DIR/provider-dataplane.out" 2>&1 &
+echo "$!" >"$PID_DIR/provider-dataplane.pid"
+
+python3 "$DATAPLANE_SCRIPT" \
+  --participant-id consumer \
+  --component-id consumer-http-dataplane \
+  --port 29320 \
+  --control-plane-control-url http://127.0.0.1:29192/control/v1 \
+  --public-base-url http://127.0.0.1:29320/public \
+  --source-lookup-base-url http://127.0.0.1:29291/public \
+  --log-file "$LOG_DIR/consumer-dataplane.log" \
+  >"$LOG_DIR/consumer-dataplane.out" 2>&1 &
+echo "$!" >"$PID_DIR/consumer-dataplane.pid"
+
+wait_for_port 19320 provider-custom-dataplane
+wait_for_port 29320 consumer-custom-dataplane
+sleep 4
 
 python3 "$ROOT/scripts/dsp_e2e_client.py" "$ROOT"
 

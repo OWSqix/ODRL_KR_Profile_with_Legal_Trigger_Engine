@@ -9,8 +9,10 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-PROVIDER_MANAGEMENT = "http://localhost:19193/management/v3"
-CONSUMER_MANAGEMENT = "http://localhost:29193/management/v3"
+PROVIDER_MANAGEMENT = "http://localhost:19193/management/v4"
+CONSUMER_MANAGEMENT = "http://localhost:29193/management/v4"
+CONSUMER_EDR_ENDPOINT = "http://localhost:29291/public/edrs"
+CONSUMER_PUSH_SINK = "http://127.0.0.1:29320/sinks/push-verification"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -110,11 +112,58 @@ def poll_transfer(transfer_process_id: str) -> dict[str, Any]:
     raise TimeoutError(f"Transfer process did not reach a retrievable state: {last}")
 
 
+def create_transfer_with_retry(body: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    last_terminal: dict[str, Any] | None = None
+
+    for attempt in range(1, 5):
+        transfer = post_json_retry(f"{CONSUMER_MANAGEMENT}/transferprocesses", body)
+        transfer_process_id = identifier(transfer)
+        final_transfer = poll_transfer(transfer_process_id)
+        transfer_state = final_transfer.get("state")
+        if transfer_state in {"STARTED", "COMPLETED"}:
+            return transfer_process_id, final_transfer
+
+        last_terminal = final_transfer
+        error_detail = (final_transfer.get("errorDetail") or "").lower()
+        if transfer_state != "TERMINATED" or "no dataplane found" not in error_detail or attempt == 4:
+            break
+
+        time.sleep(1.0)
+
+    raise AssertionError(last_terminal)
+
+
+def retrieve_push_sink(url: str) -> str:
+    request = Request(url, method="GET")
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = response.read().decode("utf-8")
+            if response.status >= 400:
+                raise RuntimeError(f"Push sink retrieval failed: HTTP {response.status} {payload}")
+            return payload
+    except HTTPError as error:
+        details = error.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Push sink retrieval failed: HTTP {error.code} {details}") from error
+
+
+def poll_push_sink(url: str) -> str:
+    last_error: Exception | None = None
+    for _ in range(40):
+        try:
+            return retrieve_push_sink(url)
+        except RuntimeError as error:
+            last_error = error
+            if "HTTP 404" not in str(error):
+                raise
+        time.sleep(0.5)
+    raise TimeoutError(f"Push sink payload did not become available at {url}") from last_error
+
+
 def poll_edr_data_address(transfer_process_id: str) -> dict[str, Any]:
     last_error: Exception | None = None
     for _ in range(80):
         try:
-            edr = get_json(f"{CONSUMER_MANAGEMENT}/edrs/{transfer_process_id}/dataaddress")
+            edr = get_json(f"{CONSUMER_EDR_ENDPOINT}/{transfer_process_id}/dataaddress")
             if edr:
                 return edr
         except RuntimeError as error:
@@ -235,9 +284,7 @@ def main() -> int:
             "type": "HttpProxy"
         }
     }
-    transfer = post_json_retry(f"{CONSUMER_MANAGEMENT}/transferprocesses", transfer_request)
-    transfer_process_id = identifier(transfer)
-    final_transfer = poll_transfer(transfer_process_id)
+    transfer_process_id, final_transfer = create_transfer_with_retry(transfer_request)
     transfer_state = final_transfer.get("state")
     assert transfer_state in {"STARTED", "COMPLETED"}, final_transfer
 
@@ -245,6 +292,27 @@ def main() -> int:
     assert_payload_is_protected(edr)
     payload = retrieve_payload(edr)
     assert "Leanne Graham" in payload or "Bret" in payload, payload[:500]
+
+    push_transfer_request = {
+        "@context": {"@vocab": "https://w3id.org/edc/v0.0.1/ns/"},
+        "@type": "TransferRequest",
+        "counterPartyAddress": "http://localhost:19194/protocol/2025-1",
+        "contractId": agreement_id,
+        "assetId": "s1-broadcast-viewing-log",
+        "protocol": "dataspace-protocol-http:2025-1",
+        "transferType": "HttpData-PUSH",
+        "dataDestination": {
+            "@type": "DataAddress",
+            "type": "HttpData",
+            "baseUrl": CONSUMER_PUSH_SINK,
+        },
+    }
+    push_transfer_process_id, push_final_transfer = create_transfer_with_retry(push_transfer_request)
+    push_transfer_state = push_final_transfer.get("state")
+    assert push_transfer_state in {"STARTED", "COMPLETED"}, push_final_transfer
+
+    push_payload = poll_push_sink(CONSUMER_PUSH_SINK)
+    assert "Leanne Graham" in push_payload or "Bret" in push_payload, push_payload[:500]
 
     print(
         json.dumps(
@@ -256,7 +324,10 @@ def main() -> int:
                 "state": final_negotiation.get("state"),
                 "transferProcessId": transfer_process_id,
                 "transferState": transfer_state,
+                "pushTransferProcessId": push_transfer_process_id,
+                "pushTransferState": push_transfer_state,
                 "payloadBytes": len(payload.encode("utf-8")),
+                "pushPayloadBytes": len(push_payload.encode("utf-8")),
             },
             indent=2,
             sort_keys=True,

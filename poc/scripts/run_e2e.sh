@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-EDC_JAR="$ROOT/edc-extension/target/odrl-kr-edc-extension-0.1.0-SNAPSHOT.jar"
+EDC_JAR="$ROOT/edc-extension/target/odrl-kr-edc-extension-0.2.0.jar"
 
 cd "$ROOT"
 

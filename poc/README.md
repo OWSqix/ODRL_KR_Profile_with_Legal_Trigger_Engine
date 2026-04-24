@@ -1,6 +1,6 @@
 # ODRL-KR Consent Management Proof Background
 
-This repository is a research proof-of-concept supplement for ODRL-KR, LegalBasisRecord, S1 decision tracing, and EDC 0.16.0-style policy evaluation tests.
+This repository is a research proof-of-concept supplement for ODRL-KR, LegalBasisRecord, S1 decision tracing, and EDC 0.17.0-style policy evaluation tests.
 
 It is not legal advice, not compliance certification, and not endorsed by any government body, PIPC, W3C, Eclipse Foundation, or standards organization. The `https://w3id.org/odrl-kr` identifiers are proposed research identifiers until a redirect/governance process is completed.
 
@@ -13,7 +13,9 @@ It is not legal advice, not compliance certification, and not endorsed by any go
 - `examples/legal-basis-record/` - valid and invalid S1 records.
 - `examples/s1-decision-trace/` - S1 input, expected trace, and policy.
 - `src/odrl_kr/lte.py` - deterministic S1 LTE trace generator.
-- `edc-extension/` - Maven-built EDC 0.16.0 `ServiceExtension` and policy-function tests.
+- `edc-extension/` - Maven-built EDC 0.17.0 `ServiceExtension` and policy-function tests.
+- `e2e-dsp/control-plane/` - shaded EDC 0.17.0 control-plane runtime for DSP smoke tests.
+- `e2e-dsp/custom-dataplane/` - standalone custom HTTP PULL/PUSH data plane used by the DSP smoke test.
 - `docs/proof-background.md` - claim-to-evidence map for manuscript support.
 
 ## Run Tests
@@ -25,7 +27,7 @@ scripts/run_all_tests.sh
 scripts/run_e2e.sh
 ```
 
-The Java lane is executed through Maven via the local `gradlew` compatibility entrypoint because this workspace has JDK 17 and Maven but no system Gradle. The EDC extension compiles against Eclipse EDC 0.16.0 `policy-engine-spi`, `policy-engine-lib`, `policy-model`, `boot-spi`, and `runtime-metamodel`; see `docs/edc-extension.md`.
+The Java lane is executed through Maven via the local `gradlew` compatibility entrypoint because this workspace has JDK 17 and Maven but no system Gradle. The EDC extension compiles against Eclipse EDC 0.17.0 `policy-engine-spi`, `policy-engine-lib`, `policy-model`, `boot-spi`, and `runtime-metamodel`; see `docs/edc-extension.md`.
 
 For connector-level DSP verification, run from the repository root:
 
@@ -33,7 +35,7 @@ For connector-level DSP verification, run from the repository root:
 poc/e2e-dsp/scripts/run_dsp_e2e.sh
 ```
 
-That script builds a shaded EDC connector runtime, starts provider and consumer connectors, seeds the provider via Management API, fetches the catalog from the consumer, and verifies contract negotiation reaches `FINALIZED`.
+That script builds a shaded EDC control-plane runtime, starts provider and consumer control planes plus standalone custom data-plane processes, seeds the provider via Management API, fetches the catalog from the consumer, and verifies contract negotiation reaches `FINALIZED`.
 
 ## Public Release Boundary
 
